@@ -24,6 +24,7 @@ app.get('/location', locationHandler);
 app.get('/weather', weatherHandler);
 app.get('/trails', trailsHandler);
 app.get('/movies', movieHandler);
+app.get('/yelp', yelpHandler);
 app.use('*', notFoundHandler);
 app.use(errorHandler);
 
@@ -138,7 +139,7 @@ function Movie(movie) {
   this.image_url = `https://image.tmdb.org/t/p/w500/${movie.poster_path}`;
   this.popularity = movie.popularity;
   this.released_on = movie.release_date;
-  console.log('PASTRAMIII', this);
+  // console.log('PASTRAMIII', this);
 }
 
 function movieHandler(request, response) {
@@ -146,20 +147,42 @@ function movieHandler(request, response) {
   superagent.get(url)
     .then(data => {
       let movies = [];
-      // console.log('SHAGHETTI', data.body.results[]);
       for (let i=0; i < 20; i++){
         movies.push(new Movie(data.body.results[i]));
       }
-
       response.status(200).json(movies);
-      // const movielsData = data.body.movie.map(movie => {
-      //   return new Movie(movie);
-      // });
+
     })
     .catch(() => {
       errorHandler('So sorry, something went wrong.', request, response);
     });
 
+}
+
+//https://api.yelp.com/v3/businesses/search
+
+function yelpHandler(request, response) {
+  const url = `https://api.yelp.com/v3/businesses/search?latitude=${request.query.data.latitude}&longitude=${request.query.data.longitude}`;
+  superagent.get(url)
+    .set(`Authorization`, `Bearer ${process.env.YELP_API_KEY}`)
+    .then(data => {
+      // console.log(data.body.yelp);
+      const yelpData = data.body.businesses.map(business => {
+        return new Yelp(business);
+      });
+      response.status(200).json(yelpData);
+    })
+    .catch(() => {
+      errorHandler('So sorry, something went wrong.', request, response);
+    });
+}
+function Yelp(business) {
+  this.name = business.name;
+  this.image_url = business.image_url;
+  this.price = business.price;
+  this.rating = business.rating;
+  this.url = business.url;
+  // console.log('PASTRAMIII', this);
 }
 
 
